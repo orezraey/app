@@ -1,5 +1,12 @@
 // Redesigned by telegram.dog/TheFirstSpeedster at https://www.npmjs.com/package/@googledrive/index which was written by someone else, credits are given on Source Page.
 // v2.3.7
+
+// Variáveis globais para seleção múltipla com Shift
+window.shiftSelectionState = {
+    lastSelectedIndex: -1,
+    isShiftPressed: false
+};
+
 // Initialize the page
 function init() {
     document.siteName = $('title').html();
@@ -31,6 +38,19 @@ function init() {
 <footer class="footer mt-auto py-3 text-muted ${UI.footer_style_class}" style="${UI.fixed_footer ?'position: fixed; ': ''}left: 0; bottom: 0; width: 100%; color: white; z-index: 9999;${UI.hide_footer ? ' display:none;': ' display:block;'}"> <div class="container" style="width: auto; padding: 0 10px;"> <p class="float-end"> <a href="#">Back to top</a> </p> ${UI.credit ? '<p>Redesigned with <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="red" xmlns="http://www.w3.org/2000/svg"> <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" /> </svg> by <a href="https://www.npmjs.com/package/@googledrive/index" target="_blank">TheFirstSpeedster</a>, based on Open Source Softwares.</p>' : ''} <p>© ${UI.copyright_year} - <a href=" ${UI.company_link}" target="_blank"> ${UI.company_name}</a>, All Rights Reserved.</p> </div> </footer>
   `;
     $('body').html(html);
+    
+    // Adicionar listeners para detecção de tecla Shift
+    $(document).on('keydown', function(e) {
+        if (e.shiftKey) {
+            window.shiftSelectionState.isShiftPressed = true;
+        }
+    });
+    
+    $(document).on('keyup', function(e) {
+        if (!e.shiftKey) {
+            window.shiftSelectionState.isShiftPressed = false;
+        }
+    });
 }
 
 const folder_icon = `<svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 48 48" preserveAspectRatio="xMidYMid meet"><g clip-path="url(#__lottie_element_11)"><g transform="matrix(1,0,0,1,0,0)" opacity="1" style="display: block;"><g opacity="1" transform="matrix(1,0,0,1,24,24)"><path fill="rgb(255,159,0)" fill-opacity="1" d=" M16,-12 C16,-12 -2,-12 -2,-12 C-2,-12 -6,-16 -6,-16 C-6,-16 -16,-16 -16,-16 C-18.200000762939453,-16 -20,-14.199999809265137 -20,-12 C-20,-12 -20,12 -20,12 C-20,14.208999633789062 -18.208999633789062,16 -16,16 C-16,16 13.682000160217285,16 13.682000160217285,16 C13.682000160217285,16 20,5 20,5 C20,5 20,-8 20,-8 C20,-10.199999809265137 18.200000762939453,-12 16,-12z"></path></g></g><g transform="matrix(1,0,0,1,0,0)" opacity="1" style="display: block;"><g opacity="1" transform="matrix(1,0,0,1,24,26)"><path fill="rgb(255,201,40)" fill-opacity="1" d=" M16,-14 C16,-14 -16,-14 -16,-14 C-18.200000762939453,-14 -20,-12.199999809265137 -20,-10 C-20,-10 -20,10 -20,10 C-20,12.199999809265137 -18.200000762939453,14 -16,14 C-16,14 16,14 16,14 C18.200000762939453,14 20,12.199999809265137 20,10 C20,10 20,-10 20,-10 C20,-12.199999809265137 18.200000762939453,-14 16,-14z"></path></g></g></g></svg>`
@@ -647,7 +667,7 @@ function append_files_to_fallback_list(path, files) {
                 pn += "?a=view";
                 c += " view";
                 //}
-                html += `<div class="list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" id="flexCheckDefault">' : ''}`
+                html += `<div class="list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input file-checkbox" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" data-file-index="'+i+'" id="file-checkbox-fallback-'+i+'">' : ''}`
 
                 if ("|mp4|webm|avi|mpg|mpeg|mkv|rm|rmvb|mov|wmv|asf|ts|flv|".indexOf(`|${ext}|`) >= 0) {
                     html += video_icon
@@ -789,7 +809,7 @@ function append_files_to_list(path, files) {
             pn += "?a=view";
             c += " view";
             //}
-            html += `<div class="list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" id="flexCheckDefault">' : ''}`
+            html += `<div class="list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input file-checkbox" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" data-file-index="'+i+'" id="file-checkbox-'+i+'">' : ''}`
 
             if ("|mp4|webm|avi|mpg|mpeg|mkv|rm|rmvb|mov|wmv|asf|ts|flv|".indexOf(`|${ext}|`) >= 0) {
                 html += video_icon
@@ -1126,7 +1146,7 @@ function append_search_result_to_list(files) {
                 item['size'] = formatFileSize(item['size']);
                 var ext = item.fileExtension
                 var link = UI.second_domain_for_dl ? UI.downloaddomain + item.link : window.location.origin + item.link;
-                html += `<div style="color: ${UI.css_a_tag_color};" gd-type="$item['mimeType']}" class="countitems size_items list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" id="flexCheckDefault">' : ''}`
+                html += `<div style="color: ${UI.css_a_tag_color};" gd-type="$item['mimeType']}" class="countitems size_items list-group-item list-group-item-action">${UI.allow_selecting_files ? '<input class="form-check-input file-checkbox" style="margin-top: 0.3em;margin-right: 0.5em;" type="checkbox" value="'+link+'" data-file-index="'+i+'" id="file-checkbox-search-'+i+'">' : ''}`
 
                 if ("|mp4|webm|avi|mpg|mpeg|mkv|rm|rmvb|mov|wmv|asf|ts|flv|".indexOf(`|${ext}|`) >= 0) {
                     html += video_icon
@@ -2015,16 +2035,41 @@ function outFunc() {
 
 // function to update the list of checkboxes
 function updateCheckboxes() {
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
     const selectAllCheckbox = document.getElementById('select-all-checkboxes');
 
     if (checkboxes.length > 0 && selectAllCheckbox) { // Check if checkboxes and selectAllCheckbox exist
-        selectAllCheckbox.addEventListener('click', () => {
-            checkboxes.forEach((checkbox) => {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
+        // Remove existing event listeners to avoid duplicates
+        selectAllCheckbox.removeEventListener('click', selectAllHandler);
+        selectAllCheckbox.addEventListener('click', selectAllHandler);
+        
+        // Add event listeners to file checkboxes for shift selection
+        checkboxes.forEach((checkbox, index) => {
+            checkbox.removeEventListener('click', checkbox.shiftClickHandler);
+            checkbox.shiftClickHandler = (e) => {
+                const fileIndex = parseInt(checkbox.getAttribute('data-file-index'));
+                
+                if (e.shiftKey && window.shiftSelectionState.lastSelectedIndex !== -1) {
+                    handleShiftSelection(index);
+                } else {
+                    window.shiftSelectionState.lastSelectedIndex = index;
+                }
+                
+                // Atualizar estado do "Select all"
+                updateSelectAllState();
+            };
+            checkbox.addEventListener('click', checkbox.shiftClickHandler);
         });
     }
+}
+
+function selectAllHandler() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
+    const selectAllCheckbox = document.getElementById('select-all-checkboxes');
+    
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
 }
 
 async function getCookie(name) {
@@ -2105,3 +2150,95 @@ const options = {
 
 // observe changes to the body element
 observer.observe(document.documentElement, options);
+
+// Adicionar estilos CSS para seleção múltipla
+$(document).ready(function() {
+    const style = `
+        <style>
+            /* Estilo para indicar seleção múltipla ativa */
+            .shift-selection-active .file-checkbox {
+                box-shadow: 0 0 0 2px #007bff;
+                transition: box-shadow 0.2s ease;
+            }
+            
+            /* Melhorar feedback visual dos checkboxes */
+            .file-checkbox:hover {
+                transform: scale(1.1);
+                transition: transform 0.1s ease;
+            }
+            
+            /* Indicador visual de que Shift está pressionado */
+            body.shift-pressed .list-group-item {
+                cursor: crosshair;
+            }
+            
+            /* Destacar itens selecionados em range */
+            .file-checkbox:checked {
+                accent-color: #007bff;
+            }
+        </style>
+    `;
+    
+    $('head').append(style);
+    
+    // Atualizar classe do body quando Shift está pressionado
+    $(document).on('keydown', function(e) {
+        if (e.shiftKey) {
+            $('body').addClass('shift-pressed');
+        }
+    });
+    
+    $(document).on('keyup', function(e) {
+        if (!e.shiftKey) {
+            $('body').removeClass('shift-pressed');
+        }
+    });
+});
+
+// Função para seleção múltipla com Shift
+function handleShiftSelection(clickedIndex) {
+    if (!window.shiftSelectionState.isShiftPressed || window.shiftSelectionState.lastSelectedIndex === -1) {
+        // Não é seleção múltipla ou não há item previamente selecionado
+        window.shiftSelectionState.lastSelectedIndex = clickedIndex;
+        return;
+    }
+    
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
+    const startIndex = Math.min(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
+    const endIndex = Math.max(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
+    
+    // Determinar se devemos marcar ou desmarcar baseado no estado do checkbox clicado
+    const clickedCheckbox = checkboxes[clickedIndex];
+    const shouldCheck = clickedCheckbox.checked;
+    
+    // Selecionar todos os itens no intervalo
+    for (let i = startIndex; i <= endIndex; i++) {
+        if (checkboxes[i]) {
+            checkboxes[i].checked = shouldCheck;
+        }
+    }
+    
+    // Atualizar o estado do checkbox "Select all"
+    updateSelectAllState();
+}
+
+// Função para atualizar o estado do checkbox "Select all"
+function updateSelectAllState() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
+    const selectAllCheckbox = document.getElementById('select-all-checkboxes');
+    
+    if (!selectAllCheckbox) return;
+    
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    
+    if (checkedCount === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCount === checkboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
