@@ -470,56 +470,118 @@ function list(path, id = '', fallback = false) {
     }
 
 
-    const copyBtn = document.getElementById("handle-multiple-items-copy");
+    // Wait for DOM to be ready and then attach event listeners
+    setTimeout(() => {
+        const copyBtn = document.getElementById("handle-multiple-items-copy");
+        const downloadBtn = document.getElementById("handle-multiple-items-download");
 
-    // Add a click event listener to the copy button
-    copyBtn.addEventListener("click", () => {
-        // Get all the checked checkboxes
-        const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
+        if (copyBtn) {
+            // Add a click event listener to the copy button
+            copyBtn.addEventListener("click", () => {
+                // Get all the checked checkboxes
+                const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
 
-        // Create an array to store the selected items' data
-        const selectedItemsData = [];
+                // Create an array to store the selected items' data
+                const selectedItemsData = [];
 
-        // Loop through each checked checkbox
-        if (checkedItems.length === 0) {
-            alert("No items selected!");
-            return;
+                // Loop through each checked checkbox
+                if (checkedItems.length === 0) {
+                    alert("Nenhum item selecionado!");
+                    return;
+                }
+                checkedItems.forEach((item) => {
+                    if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
+                        // Get the value of the checkbox (in this case, the URL)
+                        const itemData = item.value;
+                        // Push the value to the array
+                        selectedItemsData.push(itemData);
+                    }
+                });
+
+                // Join the selected items' data with a newline character
+                const dataToCopy = selectedItemsData.join("\n");
+
+                // Create a temporary input element
+                const tempInput = document.createElement("textarea");
+                tempInput.value = dataToCopy;
+
+                // Add the temporary input element to the document
+                document.body.appendChild(tempInput);
+
+                // Select the text inside the temporary input element
+                tempInput.select();
+
+                // Copy the selected text to the clipboard
+                document.execCommand("copy");
+
+                // Remove the temporary input element from the document
+                document.body.removeChild(tempInput);
+
+                // Alert the user that the data has been copied
+                alert("Links copiados para a área de transferência!");
+            });
         }
-        checkedItems.forEach((item) => {
-            // Get the value of the checkbox (in this case, the URL)
-            const itemData = item.value;
-            // Push the value to the array
-            selectedItemsData.push(itemData);
-        });
 
-        // Join the selected items' data with a newline character
-        const dataToCopy = selectedItemsData.join("\n");
+        if (downloadBtn) {
+            // Add a click event listener to the download button
+            downloadBtn.addEventListener("click", () => {
+                // Get all the checked checkboxes
+                const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
 
-        // Create a temporary input element
-        const tempInput = document.createElement("textarea");
-        tempInput.value = dataToCopy;
+                if (checkedItems.length === 0) {
+                    alert("Nenhum item selecionado!");
+                    return;
+                }
 
-        // Add the temporary input element to the document
-        document.body.appendChild(tempInput);
+                // Ask for user confirmation
+                const confirmDownload = confirm(`Tem certeza de que deseja baixar ${checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0)} arquivo(s)? Isso iniciará múltiplos downloads.`);
+                
+                if (!confirmDownload) {
+                    return;
+                }
 
-        // Select the text inside the temporary input element
-        tempInput.select();
+                // Create an array to store the selected items' URLs
+                const selectedUrls = [];
+                
+                checkedItems.forEach((item) => {
+                    if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
+                        selectedUrls.push(item.value);
+                    }
+                });
 
-        // Copy the selected text to the clipboard
-        document.execCommand("copy");
+                if (selectedUrls.length === 0) {
+                    alert("Nenhum arquivo selecionado para download!");
+                    return;
+                }
 
-        // Remove the temporary input element from the document
-        document.body.removeChild(tempInput);
+                // Function to download files with delay to avoid browser blocking
+                function downloadWithDelay(urls, index = 0, delay = 1000) {
+                    if (index >= urls.length) {
+                        alert(`Download iniciado para ${urls.length} arquivo(s)!`);
+                        return;
+                    }
 
-        // Alert the user that the data has been copied
-        alert("Selected items copied to clipboard!");
-    });
+                    // Create a temporary anchor element to trigger download
+                    const link = document.createElement('a');
+                    link.href = urls[index];
+                    link.download = ''; // This will use the original filename
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
 
-    // Add download functionality
-    const downloadBtn = document.getElementById("handle-multiple-items-download");
-    
-    // Add a click event listener to the download button
-    downloadBtn.addEventListener("click", handleMultipleDownloads);
+                    // Download next file after delay
+                    setTimeout(() => {
+                        downloadWithDelay(urls, index + 1, delay);
+                    }, delay);
+                }
+
+                // Start downloading files with 1 second delay between each
+                downloadWithDelay(selectedUrls);
+            });
+        }
+    }, 100);
 }
 
 function askPassword(path) {
@@ -921,55 +983,117 @@ function render_search_result_list() {
         q: window.MODEL.q
     }, searchSuccessCallback);
 
-    const copyBtn = document.getElementById("handle-multiple-items-copy");
+    // Wait for DOM to be ready and then attach event listeners
+    setTimeout(() => {
+        const copyBtn = document.getElementById("handle-multiple-items-copy");
+        const downloadBtn = document.getElementById("handle-multiple-items-download");
 
-    // Add a click event listener to the copy button
-    copyBtn.addEventListener("click", () => {
-        // Get all the checked checkboxes
-        const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
+        if (copyBtn) {
+            // Add a click event listener to the copy button
+            copyBtn.addEventListener("click", () => {
+                // Get all the checked checkboxes
+                const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
 
-        // Create an array to store the selected items' data
-        const selectedItemsData = [];
-        if (checkedItems.length === 0) {
-            alert("No items selected!");
-            return;
+                // Create an array to store the selected items' data
+                const selectedItemsData = [];
+                if (checkedItems.length === 0) {
+                    alert("Nenhum item selecionado!");
+                    return;
+                }
+                // Loop through each checked checkbox
+                checkedItems.forEach((item) => {
+                    if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
+                        // Get the value of the checkbox (in this case, the URL)
+                        const itemData = item.value;
+                        // Push the value to the array
+                        selectedItemsData.push(itemData);
+                    }
+                });
+
+                // Join the selected items' data with a newline character
+                const dataToCopy = selectedItemsData.join("\n");
+
+                // Create a temporary input element
+                const tempInput = document.createElement("textarea");
+                tempInput.value = dataToCopy;
+
+                // Add the temporary input element to the document
+                document.body.appendChild(tempInput);
+
+                // Select the text inside the temporary input element
+                tempInput.select();
+
+                // Copy the selected text to the clipboard
+                document.execCommand("copy");
+
+                // Remove the temporary input element from the document
+                document.body.removeChild(tempInput);
+
+                // Alert the user that the data has been copied
+                alert("Links copiados para a área de transferência!");
+            });
         }
-        // Loop through each checked checkbox
-        checkedItems.forEach((item) => {
-            // Get the value of the checkbox (in this case, the URL)
-            const itemData = item.value;
-            // Push the value to the array
-            selectedItemsData.push(itemData);
-        });
 
-        // Join the selected items' data with a newline character
-        const dataToCopy = selectedItemsData.join("\n");
+        if (downloadBtn) {
+            // Add a click event listener to the download button
+            downloadBtn.addEventListener("click", () => {
+                // Get all the checked checkboxes
+                const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
 
-        // Create a temporary input element
-        const tempInput = document.createElement("textarea");
-        tempInput.value = dataToCopy;
+                if (checkedItems.length === 0) {
+                    alert("Nenhum item selecionado!");
+                    return;
+                }
 
-        // Add the temporary input element to the document
-        document.body.appendChild(tempInput);
+                // Ask for user confirmation
+                const confirmDownload = confirm(`Tem certeza de que deseja baixar ${checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0)} arquivo(s)? Isso iniciará múltiplos downloads.`);
+                
+                if (!confirmDownload) {
+                    return;
+                }
 
-        // Select the text inside the temporary input element
-        tempInput.select();
+                // Create an array to store the selected items' URLs
+                const selectedUrls = [];
+                
+                checkedItems.forEach((item) => {
+                    if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
+                        selectedUrls.push(item.value);
+                    }
+                });
 
-        // Copy the selected text to the clipboard
-        document.execCommand("copy");
+                if (selectedUrls.length === 0) {
+                    alert("Nenhum arquivo selecionado para download!");
+                    return;
+                }
 
-        // Remove the temporary input element from the document
-        document.body.removeChild(tempInput);
+                // Function to download files with delay to avoid browser blocking
+                function downloadWithDelay(urls, index = 0, delay = 1000) {
+                    if (index >= urls.length) {
+                        alert(`Download iniciado para ${urls.length} arquivo(s)!`);
+                        return;
+                    }
 
-        // Alert the user that the data has been copied
-        alert("Selected items copied to clipboard!");
-    });
+                    // Create a temporary anchor element to trigger download
+                    const link = document.createElement('a');
+                    link.href = urls[index];
+                    link.download = ''; // This will use the original filename
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
 
-    // Add download functionality for search results
-    const downloadBtn = document.getElementById("handle-multiple-items-download");
-    
-    // Add a click event listener to the download button
-    downloadBtn.addEventListener("click", handleMultipleDownloads);
+                    // Download next file after delay
+                    setTimeout(() => {
+                        downloadWithDelay(urls, index + 1, delay);
+                    }, delay);
+                }
+
+                // Start downloading files with 1 second delay between each
+                downloadWithDelay(selectedUrls);
+            });
+        }
+    }, 100);
 }
 
 /**
@@ -1966,63 +2090,7 @@ async function copyFile(driveid) {
 }
 
 
-// Global function to handle multiple downloads
-function handleMultipleDownloads() {
-    // Get all the checked checkboxes
-    const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked');
 
-    if (checkedItems.length === 0) {
-        alert("Nenhum item selecionado!");
-        return;
-    }
-
-    // Ask for user confirmation
-    const confirmDownload = confirm(`Tem certeza de que deseja baixar ${checkedItems.length} arquivo(s)? Isso iniciará múltiplos downloads.`);
-    
-    if (!confirmDownload) {
-        return;
-    }
-
-    // Create an array to store the selected items' URLs
-    const selectedUrls = [];
-    
-    checkedItems.forEach((item) => {
-        if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
-            selectedUrls.push(item.value);
-        }
-    });
-
-    if (selectedUrls.length === 0) {
-        alert("Nenhum arquivo selecionado para download!");
-        return;
-    }
-
-    // Function to download files with delay to avoid browser blocking
-    function downloadWithDelay(urls, index = 0, delay = 1000) {
-        if (index >= urls.length) {
-            alert(`Download iniciado para ${urls.length} arquivo(s)!`);
-            return;
-        }
-
-        // Create a temporary anchor element to trigger download
-        const link = document.createElement('a');
-        link.href = urls[index];
-        link.download = ''; // This will use the original filename
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Download next file after delay
-        setTimeout(() => {
-            downloadWithDelay(urls, index + 1, delay);
-        }, delay);
-    }
-
-    // Start downloading files with 1 second delay between each
-    downloadWithDelay(selectedUrls);
-}
 
 // create a MutationObserver to listen for changes to the DOM
 const observer = new MutationObserver(() => {
