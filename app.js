@@ -43,6 +43,8 @@ function init() {
     $(document).on('keydown', function(e) {
         if (e.shiftKey) {
             window.shiftSelectionState.isShiftPressed = true;
+            // Limpar seleção de texto quando Shift é pressionado
+            setTimeout(clearTextSelection, 0);
         }
     });
     
@@ -2047,6 +2049,15 @@ function updateCheckboxes() {
         checkboxes.forEach((checkbox, index) => {
             checkbox.removeEventListener('click', checkbox.shiftClickHandler);
             checkbox.shiftClickHandler = (e) => {
+                // Prevenir seleção de texto quando Shift está pressionado
+                if (e.shiftKey) {
+                    e.stopPropagation();
+                    // Limpar qualquer seleção de texto existente
+                    if (window.getSelection) {
+                        window.getSelection().removeAllRanges();
+                    }
+                }
+                
                 const fileIndex = parseInt(checkbox.getAttribute('data-file-index'));
                 
                 if (e.shiftKey && window.shiftSelectionState.lastSelectedIndex !== -1) {
@@ -2059,6 +2070,19 @@ function updateCheckboxes() {
                 updateSelectAllState();
             };
             checkbox.addEventListener('click', checkbox.shiftClickHandler);
+            
+            // Adicionar event listener para mousedown para prevenir seleção de texto
+            checkbox.removeEventListener('mousedown', checkbox.mousedownHandler);
+            checkbox.mousedownHandler = (e) => {
+                if (e.shiftKey) {
+                    e.stopPropagation();
+                    // Limpar qualquer seleção de texto existente
+                    if (window.getSelection) {
+                        window.getSelection().removeAllRanges();
+                    }
+                }
+            };
+            checkbox.addEventListener('mousedown', checkbox.mousedownHandler);
         });
     }
 }
@@ -2172,6 +2196,22 @@ $(document).ready(function() {
                 cursor: crosshair;
             }
             
+            /* Prevenir seleção de texto quando Shift está pressionado */
+            body.shift-pressed {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            /* Prevenir seleção de texto nos itens da lista durante seleção múltipla */
+            body.shift-pressed .list-group-item * {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
             /* Destacar itens selecionados em range */
             .file-checkbox:checked {
                 accent-color: #007bff;
@@ -2185,6 +2225,8 @@ $(document).ready(function() {
     $(document).on('keydown', function(e) {
         if (e.shiftKey) {
             $('body').addClass('shift-pressed');
+            // Limpar seleção de texto existente
+            clearTextSelection();
         }
     });
     
@@ -2193,10 +2235,53 @@ $(document).ready(function() {
             $('body').removeClass('shift-pressed');
         }
     });
+    
+    // Prevenir seleção de texto em cliques com Shift
+    $(document).on('mousedown', '.list-group-item', function(e) {
+        if (e.shiftKey) {
+            e.preventDefault();
+            clearTextSelection();
+            return false;
+        }
+    });
+    
+    // Prevenir seleção de texto em links e spans quando Shift está pressionado
+    $(document).on('selectstart', function(e) {
+        if (window.shiftSelectionState.isShiftPressed) {
+            e.preventDefault();
+            clearTextSelection();
+            return false;
+        }
+    });
+    
+    // Event listener adicional para Firefox - prevenir seleção durante drag
+    $(document).on('dragstart', function(e) {
+        if (window.shiftSelectionState.isShiftPressed) {
+            e.preventDefault();
+            return false;
+        }
+    });
 });
+
+// Função para limpar seleção de texto
+function clearTextSelection() {
+    if (window.getSelection) {
+        const selection = window.getSelection();
+        if (selection.removeAllRanges) {
+            selection.removeAllRanges();
+        } else if (selection.empty) {
+            selection.empty();
+        }
+    } else if (document.selection) {
+        document.selection.empty();
+    }
+}
 
 // Função para seleção múltipla com Shift
 function handleShiftSelection(clickedIndex) {
+    // Limpar seleção de texto antes de fazer a seleção de arquivos
+    clearTextSelection();
+    
     if (!window.shiftSelectionState.isShiftPressed || window.shiftSelectionState.lastSelectedIndex === -1) {
         // Não é seleção múltipla ou não há item previamente selecionado
         window.shiftSelectionState.lastSelectedIndex = clickedIndex;
