@@ -2444,8 +2444,7 @@ function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
         hideDownloadProgress();
         // Reset download in progress flag
         downloadInProgress = false;
-        showNotification(`Downloads concluídos! Total: ${urls.length} arquivo(s)`, 'info', 5000);
-        console.log("All downloads completed");
+        console.log(`Downloads concluídos! Total: ${urls.length} arquivo(s)`);
         return;
     }
 
@@ -2553,7 +2552,7 @@ let downloadInProgress = false;
 function startMultipleDownloads(urls) {
     // Prevent simultaneous executions
     if (downloadInProgress) {
-        showNotification("Downloads já estão em progresso. Aguarde a conclusão.", 'warning', 3000);
+        console.log("Downloads já estão em progresso. Aguarde a conclusão.");
         return;
     }
     
