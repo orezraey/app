@@ -599,8 +599,8 @@ function list(path, id = '', fallback = false) {
                     }, delay);
                 }
 
-                // Start downloading files with 1 second delay between each
-                downloadWithDelay(selectedUrls);
+                // Start downloading files with improved compatibility
+                improvedDownloadWithDelay(selectedUrls);
             });
         }
     }, 100);
@@ -1111,8 +1111,8 @@ function render_search_result_list() {
                     }, delay);
                 }
 
-                // Start downloading files with 1 second delay between each
-                downloadWithDelay(selectedUrls);
+                // Start downloading files with improved compatibility
+                improvedDownloadWithDelay(selectedUrls);
             });
         }
     }, 100);
@@ -2363,5 +2363,64 @@ function updateSelectAllState() {
     } else {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = true;
+    }
+}
+
+// Improved download function for multiple files with better browser compatibility
+// Chrome and Firefox block programmatic multiple downloads due to security policies
+// This function uses multiple techniques to bypass these restrictions
+function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
+    if (index >= urls.length) {
+        alert(`Downloads concluídos! Total: ${urls.length} arquivo(s)`);
+        return;
+    }
+
+    try {
+        // Create download progress feedback
+        console.log(`Iniciando download ${index + 1} de ${urls.length}: ${urls[index].split('/').pop()}`);
+        
+        // Method 1: Try window.open first (works better in Chrome/Firefox for multiple downloads)
+        const downloadWindow = window.open(urls[index], '_blank');
+        
+        // Method 2: Fallback to anchor click if window.open might not work
+        setTimeout(() => {
+            if (!downloadWindow || downloadWindow.closed || downloadWindow.location.href === 'about:blank') {
+                const link = document.createElement('a');
+                link.href = urls[index];
+                link.download = urls[index].split('/').pop() || 'download';
+                link.target = '_blank';
+                link.style.display = 'none';
+                
+                // Add to document temporarily
+                document.body.appendChild(link);
+                
+                // Create a proper click event
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                
+                link.dispatchEvent(clickEvent);
+                
+                setTimeout(() => {
+                    if (document.body.contains(link)) {
+                        document.body.removeChild(link);
+                    }
+                }, 100);
+            }
+        }, 200);
+
+        // Continue with next file after delay
+        setTimeout(() => {
+            improvedDownloadWithDelay(urls, index + 1, delay);
+        }, delay);
+        
+    } catch (error) {
+        console.error(`Erro no download do arquivo ${index + 1}:`, error);
+        // Continue with next file even if current fails
+        setTimeout(() => {
+            improvedDownloadWithDelay(urls, index + 1, delay);
+        }, delay);
     }
 }
