@@ -2061,7 +2061,9 @@ function updateCheckboxes() {
                 const fileIndex = parseInt(checkbox.getAttribute('data-file-index'));
                 
                 if (e.shiftKey && window.shiftSelectionState.lastSelectedIndex !== -1) {
-                    handleShiftSelection(index);
+                    // Capturar o estado antes da mudança para determinar a ação correta
+                    const wasCheckedBeforeClick = !checkbox.checked; // Inverte porque o clique já mudou o estado
+                    handleShiftSelection(index, wasCheckedBeforeClick);
                 } else {
                     window.shiftSelectionState.lastSelectedIndex = index;
                 }
@@ -2278,33 +2280,69 @@ function clearTextSelection() {
 }
 
 // Função para seleção múltipla com Shift
-function handleShiftSelection(clickedIndex) {
-    // Limpar seleção de texto antes de fazer a seleção de arquivos
-    clearTextSelection();
-    
-    if (!window.shiftSelectionState.isShiftPressed || window.shiftSelectionState.lastSelectedIndex === -1) {
-        // Não é seleção múltipla ou não há item previamente selecionado
-        window.shiftSelectionState.lastSelectedIndex = clickedIndex;
-        return;
-    }
-    
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
-    const startIndex = Math.min(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
-    const endIndex = Math.max(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
-    
-    // Determinar se devemos marcar ou desmarcar baseado no estado do checkbox clicado
-    const clickedCheckbox = checkboxes[clickedIndex];
-    const shouldCheck = clickedCheckbox.checked;
-    
-    // Selecionar todos os itens no intervalo
-    for (let i = startIndex; i <= endIndex; i++) {
-        if (checkboxes[i]) {
-            checkboxes[i].checked = shouldCheck;
+function handleShiftSelection(clickedIndex, wasCheckedBeforeClick) {
+    try {
+        // Limpar seleção de texto antes de fazer a seleção de arquivos
+        clearTextSelection();
+        
+        if (!window.shiftSelectionState.isShiftPressed || window.shiftSelectionState.lastSelectedIndex === -1) {
+            // Não é seleção múltipla ou não há item previamente selecionado
+            window.shiftSelectionState.lastSelectedIndex = clickedIndex;
+            return;
         }
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(#select-all-checkboxes)');
+        
+        // Validar índices
+        if (clickedIndex < 0 || clickedIndex >= checkboxes.length || 
+            window.shiftSelectionState.lastSelectedIndex < 0 || 
+            window.shiftSelectionState.lastSelectedIndex >= checkboxes.length) {
+            console.warn('Índices inválidos para seleção múltipla');
+            window.shiftSelectionState.lastSelectedIndex = clickedIndex;
+            return;
+        }
+        
+        const startIndex = Math.min(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
+        const endIndex = Math.max(window.shiftSelectionState.lastSelectedIndex, clickedIndex);
+        
+        // Lógica melhorada: determinar ação baseada no estado anterior do item clicado
+        // Se o usuário clicou em um item não selecionado = selecionar todo o intervalo
+        // Se o usuário clicou em um item já selecionado = deselecionar todo o intervalo
+        const shouldCheck = !wasCheckedBeforeClick;
+        
+        // Debug: mostrar informações da seleção
+        console.log(`Seleção múltipla: intervalo ${startIndex}-${endIndex}, ação: ${shouldCheck ? 'selecionar' : 'deselecionar'}`);
+        
+        // Aplicar a ação a todos os itens no intervalo
+        for (let i = startIndex; i <= endIndex; i++) {
+            if (checkboxes[i]) {
+                checkboxes[i].checked = shouldCheck;
+                
+                // Adicionar feedback visual temporário
+                const listItem = checkboxes[i].closest('.list-group-item');
+                if (listItem) {
+                    listItem.style.transition = 'background-color 0.2s ease';
+                    listItem.style.backgroundColor = shouldCheck ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+                    
+                    // Remover o feedback visual após um tempo
+                    setTimeout(() => {
+                        listItem.style.backgroundColor = '';
+                    }, 300);
+                }
+            }
+        }
+        
+        // Atualizar o último índice selecionado para o item clicado
+        window.shiftSelectionState.lastSelectedIndex = clickedIndex;
+        
+        // Atualizar o estado do checkbox "Select all"
+        updateSelectAllState();
+        
+    } catch (error) {
+        console.error('Erro na seleção múltipla:', error);
+        // Em caso de erro, apenas atualizar o último índice selecionado
+        window.shiftSelectionState.lastSelectedIndex = clickedIndex;
     }
-    
-    // Atualizar o estado do checkbox "Select all"
-    updateSelectAllState();
 }
 
 // Função para atualizar o estado do checkbox "Select all"
