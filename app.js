@@ -555,10 +555,29 @@ function list(path, id = '', fallback = false) {
                     return;
                 }
 
-                // Ask for user confirmation
-                const confirmDownload = confirm(`Tem certeza de que deseja baixar ${checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0)} arquivo(s)? Isso iniciará múltiplos downloads.`);
+                const fileCount = checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0);
                 
-                if (!confirmDownload) {
+                if (fileCount === 0) {
+                    alert("Nenhum arquivo selecionado para download!");
+                    return;
+                }
+
+                // Show detailed instructions about multiple downloads
+                const instructionMessage = `ATENÇÃO: Downloads Múltiplos
+
+Você está prestes a baixar ${fileCount} arquivo(s).
+
+INSTRUÇÕES IMPORTANTES:
+1. Seu navegador pode bloquear downloads múltiplos
+2. Quando aparecer a notificação de bloqueio, clique em "Permitir" ou "Allow"
+3. Para evitar bloqueios futuros:
+   • Chrome: Clique no ícone de download na barra de endereços
+   • Firefox: Vá em Configurações > Privacidade > Permissões
+   • Safari: Preferências > Sites > Downloads
+
+Continuar com os downloads?`;
+
+                if (!confirm(instructionMessage)) {
                     return;
                 }
 
@@ -571,36 +590,11 @@ function list(path, id = '', fallback = false) {
                     }
                 });
 
-                if (selectedUrls.length === 0) {
-                    alert("Nenhum arquivo selecionado para download!");
-                    return;
-                }
-
-                // Function to download files with delay to avoid browser blocking
-                function downloadWithDelay(urls, index = 0, delay = 1000) {
-                    if (index >= urls.length) {
-                        alert(`Download iniciado para ${urls.length} arquivo(s)!`);
-                        return;
-                    }
-
-                    // Create a temporary anchor element to trigger download
-                    const link = document.createElement('a');
-                    link.href = urls[index];
-                    link.download = ''; // This will use the original filename
-                    link.style.display = 'none';
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    // Download next file after delay
-                    setTimeout(() => {
-                        downloadWithDelay(urls, index + 1, delay);
-                    }, delay);
-                }
+                // Show progress notification
+                showDownloadProgress(fileCount);
 
                 // Start downloading files with improved compatibility
-                improvedDownloadWithDelay(selectedUrls);
+                startMultipleDownloads(selectedUrls);
             });
         }
     }, 100);
@@ -1067,10 +1061,29 @@ function render_search_result_list() {
                     return;
                 }
 
-                // Ask for user confirmation
-                const confirmDownload = confirm(`Tem certeza de que deseja baixar ${checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0)} arquivo(s)? Isso iniciará múltiplos downloads.`);
+                const fileCount = checkedItems.length - (document.getElementById('select-all-checkboxes').checked ? 1 : 0);
                 
-                if (!confirmDownload) {
+                if (fileCount === 0) {
+                    alert("Nenhum arquivo selecionado para download!");
+                    return;
+                }
+
+                // Show detailed instructions about multiple downloads
+                const instructionMessage = `ATENÇÃO: Downloads Múltiplos
+
+Você está prestes a baixar ${fileCount} arquivo(s).
+
+INSTRUÇÕES IMPORTANTES:
+1. Seu navegador pode bloquear downloads múltiplos
+2. Quando aparecer a notificação de bloqueio, clique em "Permitir" ou "Allow"
+3. Para evitar bloqueios futuros:
+   • Chrome: Clique no ícone de download na barra de endereços
+   • Firefox: Vá em Configurações > Privacidade > Permissões
+   • Safari: Preferências > Sites > Downloads
+
+Continuar com os downloads?`;
+
+                if (!confirm(instructionMessage)) {
                     return;
                 }
 
@@ -1083,36 +1096,11 @@ function render_search_result_list() {
                     }
                 });
 
-                if (selectedUrls.length === 0) {
-                    alert("Nenhum arquivo selecionado para download!");
-                    return;
-                }
-
-                // Function to download files with delay to avoid browser blocking
-                function downloadWithDelay(urls, index = 0, delay = 1000) {
-                    if (index >= urls.length) {
-                        alert(`Download iniciado para ${urls.length} arquivo(s)!`);
-                        return;
-                    }
-
-                    // Create a temporary anchor element to trigger download
-                    const link = document.createElement('a');
-                    link.href = urls[index];
-                    link.download = ''; // This will use the original filename
-                    link.style.display = 'none';
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    // Download next file after delay
-                    setTimeout(() => {
-                        downloadWithDelay(urls, index + 1, delay);
-                    }, delay);
-                }
+                // Show progress notification
+                showDownloadProgress(fileCount);
 
                 // Start downloading files with improved compatibility
-                improvedDownloadWithDelay(selectedUrls);
+                startMultipleDownloads(selectedUrls);
             });
         }
     }, 100);
@@ -2218,6 +2206,74 @@ $(document).ready(function() {
             .file-checkbox:checked {
                 accent-color: #007bff;
             }
+            
+            /* Estilos para downloads múltiplos */
+            #download-progress {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                animation: slideInFromRight 0.3s ease-out;
+            }
+            
+            @keyframes slideInFromRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            .download-notification {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 9999;
+                background: #28a745;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 4px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                animation: slideInFromRight 0.3s ease-out;
+            }
+            
+            .download-warning {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 9999;
+                background: #ffc107;
+                color: #333;
+                padding: 10px 15px;
+                border-radius: 4px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                animation: slideInFromRight 0.3s ease-out;
+            }
+            
+            /* Melhoria visual dos botões de download múltiplo */
+            #handle-multiple-items-download {
+                background: linear-gradient(45deg, #007bff, #0056b3);
+                border: none;
+                transition: all 0.3s ease;
+            }
+            
+            #handle-multiple-items-download:hover {
+                background: linear-gradient(45deg, #0056b3, #004085);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+            }
+            
+            #handle-multiple-items-copy {
+                background: linear-gradient(45deg, #28a745, #1e7e34);
+                border: none;
+                transition: all 0.3s ease;
+            }
+            
+            #handle-multiple-items-copy:hover {
+                background: linear-gradient(45deg, #1e7e34, #155724);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(40,167,69,0.3);
+            }
         </style>
     `;
     
@@ -2371,11 +2427,15 @@ function updateSelectAllState() {
 // This function uses multiple techniques to bypass these restrictions
 function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
     if (index >= urls.length) {
+        hideDownloadProgress();
         alert(`Downloads concluídos! Total: ${urls.length} arquivo(s)`);
         return;
     }
 
     try {
+        // Update progress
+        updateDownloadProgress(index + 1, urls.length);
+        
         // Create download progress feedback
         console.log(`Iniciando download ${index + 1} de ${urls.length}: ${urls[index].split('/').pop()}`);
         
@@ -2422,5 +2482,120 @@ function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
         setTimeout(() => {
             improvedDownloadWithDelay(urls, index + 1, delay);
         }, delay);
+    }
+}
+
+// Show download progress notification
+function showDownloadProgress(fileCount) {
+    const progressHtml = `
+        <div id="download-progress" style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: white; border: 2px solid #007bff; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 300px;">
+            <div style="font-weight: bold; margin-bottom: 10px;">Downloads em Progresso</div>
+            <div id="download-status">Preparando downloads...</div>
+            <div style="background-color: #f0f0f0; border-radius: 10px; height: 20px; margin: 10px 0; overflow: hidden;">
+                <div id="download-progress-bar" style="background-color: #007bff; height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <div style="font-size: 12px; color: #666;">
+                <div>Total: ${fileCount} arquivo(s)</div>
+                <div id="download-current">Aguardando...</div>
+            </div>
+            <button onclick="hideDownloadProgress()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-top: 10px; cursor: pointer;">Fechar</button>
+        </div>
+    `;
+    
+    // Remove existing progress if any
+    const existing = document.getElementById('download-progress');
+    if (existing) {
+        existing.remove();
+    }
+    
+    // Add progress to body
+    document.body.insertAdjacentHTML('beforeend', progressHtml);
+}
+
+// Update download progress
+function updateDownloadProgress(current, total) {
+    const progressBar = document.getElementById('download-progress-bar');
+    const statusText = document.getElementById('download-status');
+    const currentText = document.getElementById('download-current');
+    
+    if (progressBar && statusText && currentText) {
+        const percentage = (current / total) * 100;
+        progressBar.style.width = percentage + '%';
+        statusText.textContent = `Baixando ${current} de ${total} arquivos...`;
+        currentText.textContent = `Progresso: ${Math.round(percentage)}%`;
+    }
+}
+
+// Hide download progress
+function hideDownloadProgress() {
+    const progress = document.getElementById('download-progress');
+    if (progress) {
+        progress.remove();
+    }
+}
+
+// Enhanced multiple downloads function with better error handling
+function startMultipleDownloads(urls) {
+    if (!urls || urls.length === 0) {
+        alert("Nenhuma URL válida para download!");
+        return;
+    }
+    
+    // Check if pop-ups are blocked
+    const testWindow = window.open('', '_blank');
+    if (!testWindow) {
+        showNotification("BLOQUEIO DETECTADO!\n\nSeu navegador está bloqueando pop-ups. Para permitir downloads múltiplos:\n\n1. Olhe na barra de endereços por um ícone de bloqueio\n2. Clique no ícone e selecione 'Permitir pop-ups'\n3. Recarregue a página e tente novamente\n\nOu use Ctrl+Click para baixar arquivos individualmente.", 'warning', 10000);
+        hideDownloadProgress();
+        return;
+    } else {
+        testWindow.close();
+    }
+    
+    // Start the improved download process
+    improvedDownloadWithDelay(urls, 0, 1000);
+}
+
+// Show temporary notification
+function showNotification(message, type = 'info', duration = 5000) {
+    const className = type === 'warning' ? 'download-warning' : 'download-notification';
+    const notification = document.createElement('div');
+    notification.className = className;
+    notification.style.whiteSpace = 'pre-line';
+    notification.textContent = message;
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '×';
+    closeButton.style.cssText = 'background: none; border: none; color: inherit; font-size: 18px; cursor: pointer; float: right; margin-left: 10px; padding: 0; line-height: 1;';
+    closeButton.onclick = () => notification.remove();
+    
+    notification.appendChild(closeButton);
+    document.body.appendChild(notification);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, duration);
+}
+
+// Detect and warn about download blocks
+function detectDownloadBlock() {
+    // This function can be called periodically to detect if downloads are being blocked
+    const testLink = document.createElement('a');
+    testLink.download = 'test.txt';
+    testLink.href = 'data:text/plain;charset=utf-8,test';
+    testLink.style.display = 'none';
+    
+    document.body.appendChild(testLink);
+    
+    try {
+        testLink.click();
+        document.body.removeChild(testLink);
+        return false; // No block detected
+    } catch (e) {
+        document.body.removeChild(testLink);
+        return true; // Block detected
     }
 }
