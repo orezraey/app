@@ -2193,7 +2193,7 @@ $(document).ready(function() {
             
             /* Indicador visual de que Shift está pressionado */
             body.shift-pressed .list-group-item {
-                cursor: crosshair;
+                cursor: default;
             }
             
             /* Prevenir seleção de texto quando Shift está pressionado */
