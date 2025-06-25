@@ -497,7 +497,7 @@ function list(path, id = '', fallback = false) {
         const copyBtn = document.getElementById("handle-multiple-items-copy");
         const downloadBtn = document.getElementById("handle-multiple-items-download");
 
-        if (copyBtn) {
+        if (copyBtn && !copyBtn.hasAttribute('data-listener-added')) {
             // Add a click event listener to the copy button
             copyBtn.addEventListener("click", () => {
                 // Get all the checked checkboxes
@@ -542,9 +542,10 @@ function list(path, id = '', fallback = false) {
                 // Alert the user that the data has been copied
                 alert("Links copiados para a área de transferência!");
             });
+            copyBtn.setAttribute('data-listener-added', 'true');
         }
 
-        if (downloadBtn) {
+        if (downloadBtn && !downloadBtn.hasAttribute('data-listener-added')) {
             // Add a click event listener to the download button
             downloadBtn.addEventListener("click", () => {
                 // Get all the checked checkboxes
@@ -590,12 +591,13 @@ Continuar com os downloads?`;
                     }
                 });
 
-                // Show progress notification
-                showDownloadProgress(fileCount);
-
                 // Start downloading files with improved compatibility
-                startMultipleDownloads(selectedUrls);
+                // Add protection against rapid multiple clicks
+                setTimeout(() => {
+                    startMultipleDownloads(selectedUrls);
+                }, 100);
             });
+            downloadBtn.setAttribute('data-listener-added', 'true');
         }
     }, 100);
 }
@@ -1004,7 +1006,7 @@ function render_search_result_list() {
         const copyBtn = document.getElementById("handle-multiple-items-copy");
         const downloadBtn = document.getElementById("handle-multiple-items-download");
 
-        if (copyBtn) {
+        if (copyBtn && !copyBtn.hasAttribute('data-listener-added')) {
             // Add a click event listener to the copy button
             copyBtn.addEventListener("click", () => {
                 // Get all the checked checkboxes
@@ -1012,11 +1014,12 @@ function render_search_result_list() {
 
                 // Create an array to store the selected items' data
                 const selectedItemsData = [];
+
+                // Loop through each checked checkbox
                 if (checkedItems.length === 0) {
                     alert("Nenhum item selecionado!");
                     return;
                 }
-                // Loop through each checked checkbox
                 checkedItems.forEach((item) => {
                     if (item.id !== 'select-all-checkboxes') { // Skip the "select all" checkbox
                         // Get the value of the checkbox (in this case, the URL)
@@ -1048,9 +1051,10 @@ function render_search_result_list() {
                 // Alert the user that the data has been copied
                 alert("Links copiados para a área de transferência!");
             });
+            copyBtn.setAttribute('data-listener-added', 'true');
         }
 
-        if (downloadBtn) {
+        if (downloadBtn && !downloadBtn.hasAttribute('data-listener-added')) {
             // Add a click event listener to the download button
             downloadBtn.addEventListener("click", () => {
                 // Get all the checked checkboxes
@@ -1096,12 +1100,15 @@ Continuar com os downloads?`;
                     }
                 });
 
-                // Show progress notification
-                showDownloadProgress(fileCount);
+
 
                 // Start downloading files with improved compatibility
-                startMultipleDownloads(selectedUrls);
+                // Add protection against rapid multiple clicks
+                setTimeout(() => {
+                    startMultipleDownloads(selectedUrls);
+                }, 100);
             });
+            downloadBtn.setAttribute('data-listener-added', 'true');
         }
     }, 100);
 }
@@ -2030,49 +2037,52 @@ function updateCheckboxes() {
 
     if (checkboxes.length > 0 && selectAllCheckbox) { // Check if checkboxes and selectAllCheckbox exist
         // Remove existing event listeners to avoid duplicates
-        selectAllCheckbox.removeEventListener('click', selectAllHandler);
-        selectAllCheckbox.addEventListener('click', selectAllHandler);
+        if (!selectAllCheckbox.hasAttribute('data-listener-added')) {
+            selectAllCheckbox.addEventListener('click', selectAllHandler);
+            selectAllCheckbox.setAttribute('data-listener-added', 'true');
+        }
         
         // Add event listeners to file checkboxes for shift selection
         checkboxes.forEach((checkbox, index) => {
-            checkbox.removeEventListener('click', checkbox.shiftClickHandler);
-            checkbox.shiftClickHandler = (e) => {
-                // Prevenir seleção de texto quando Shift está pressionado
-                if (e.shiftKey) {
-                    e.stopPropagation();
-                    // Limpar qualquer seleção de texto existente
-                    if (window.getSelection) {
-                        window.getSelection().removeAllRanges();
+            if (!checkbox.hasAttribute('data-listener-added')) {
+                checkbox.shiftClickHandler = (e) => {
+                    // Prevenir seleção de texto quando Shift está pressionado
+                    if (e.shiftKey) {
+                        e.stopPropagation();
+                        // Limpar qualquer seleção de texto existente
+                        if (window.getSelection) {
+                            window.getSelection().removeAllRanges();
+                        }
                     }
-                }
-                
-                const fileIndex = parseInt(checkbox.getAttribute('data-file-index'));
-                
-                if (e.shiftKey && window.shiftSelectionState.lastSelectedIndex !== -1) {
-                    // Capturar o estado antes da mudança para determinar a ação correta
-                    const wasCheckedBeforeClick = !checkbox.checked; // Inverte porque o clique já mudou o estado
-                    handleShiftSelection(index, wasCheckedBeforeClick);
-                } else {
-                    window.shiftSelectionState.lastSelectedIndex = index;
-                }
-                
-                // Atualizar estado do "Select all"
-                updateSelectAllState();
-            };
-            checkbox.addEventListener('click', checkbox.shiftClickHandler);
-            
-            // Adicionar event listener para mousedown para prevenir seleção de texto
-            checkbox.removeEventListener('mousedown', checkbox.mousedownHandler);
-            checkbox.mousedownHandler = (e) => {
-                if (e.shiftKey) {
-                    e.stopPropagation();
-                    // Limpar qualquer seleção de texto existente
-                    if (window.getSelection) {
-                        window.getSelection().removeAllRanges();
+                    
+                    const fileIndex = parseInt(checkbox.getAttribute('data-file-index'));
+                    
+                    if (e.shiftKey && window.shiftSelectionState.lastSelectedIndex !== -1) {
+                        // Capturar o estado antes da mudança para determinar a ação correta
+                        const wasCheckedBeforeClick = !checkbox.checked; // Inverte porque o clique já mudou o estado
+                        handleShiftSelection(index, wasCheckedBeforeClick);
+                    } else {
+                        window.shiftSelectionState.lastSelectedIndex = index;
                     }
-                }
-            };
-            checkbox.addEventListener('mousedown', checkbox.mousedownHandler);
+                    
+                    // Atualizar estado do "Select all"
+                    updateSelectAllState();
+                };
+                checkbox.addEventListener('click', checkbox.shiftClickHandler);
+                checkbox.setAttribute('data-listener-added', 'true');
+                
+                // Adicionar event listener para mousedown para prevenir seleção de texto
+                checkbox.mousedownHandler = (e) => {
+                    if (e.shiftKey) {
+                        e.stopPropagation();
+                        // Limpar qualquer seleção de texto existente
+                        if (window.getSelection) {
+                            window.getSelection().removeAllRanges();
+                        }
+                    }
+                };
+                checkbox.addEventListener('mousedown', checkbox.mousedownHandler);
+            }
         });
     }
 }
@@ -2427,49 +2437,44 @@ function updateSelectAllState() {
 // This function uses multiple techniques to bypass these restrictions
 function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
     if (index >= urls.length) {
-        hideDownloadProgress();
-        alert(`Downloads concluídos! Total: ${urls.length} arquivo(s)`);
+        // Reset download in progress flag
+        downloadInProgress = false;
+        console.log(`Downloads concluídos! Total: ${urls.length} arquivo(s)`);
         return;
     }
 
     try {
-        // Update progress
-        updateDownloadProgress(index + 1, urls.length);
+
         
         // Create download progress feedback
         console.log(`Iniciando download ${index + 1} de ${urls.length}: ${urls[index].split('/').pop()}`);
         
-        // Method 1: Try window.open first (works better in Chrome/Firefox for multiple downloads)
-        const downloadWindow = window.open(urls[index], '_blank');
+        // Use only one method to avoid duplicates
+        // Method 1: Try creating anchor element first (more reliable for downloads)
+        const link = document.createElement('a');
+        link.href = urls[index];
+        link.download = urls[index].split('/').pop() || 'download';
+        link.target = '_blank';
+        link.style.display = 'none';
         
-        // Method 2: Fallback to anchor click if window.open might not work
+        // Add to document temporarily
+        document.body.appendChild(link);
+        
+        // Create a proper click event
+        const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+        });
+        
+        link.dispatchEvent(clickEvent);
+        
+        // Clean up
         setTimeout(() => {
-            if (!downloadWindow || downloadWindow.closed || downloadWindow.location.href === 'about:blank') {
-                const link = document.createElement('a');
-                link.href = urls[index];
-                link.download = urls[index].split('/').pop() || 'download';
-                link.target = '_blank';
-                link.style.display = 'none';
-                
-                // Add to document temporarily
-                document.body.appendChild(link);
-                
-                // Create a proper click event
-                const clickEvent = new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                
-                link.dispatchEvent(clickEvent);
-                
-                setTimeout(() => {
-                    if (document.body.contains(link)) {
-                        document.body.removeChild(link);
-                    }
-                }, 100);
+            if (document.body.contains(link)) {
+                document.body.removeChild(link);
             }
-        }, 200);
+        }, 100);
 
         // Continue with next file after delay
         setTimeout(() => {
@@ -2485,67 +2490,48 @@ function improvedDownloadWithDelay(urls, index = 0, delay = 500) {
     }
 }
 
-// Show download progress notification
+// Show download progress notification - DISABLED
 function showDownloadProgress(fileCount) {
-    const progressHtml = `
-        <div id="download-progress" style="position: fixed; top: 20px; right: 20px; z-index: 10000; background: white; border: 2px solid #007bff; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 300px;">
-            <div style="font-weight: bold; margin-bottom: 10px;">Downloads em Progresso</div>
-            <div id="download-status">Preparando downloads...</div>
-            <div style="background-color: #f0f0f0; border-radius: 10px; height: 20px; margin: 10px 0; overflow: hidden;">
-                <div id="download-progress-bar" style="background-color: #007bff; height: 100%; width: 0%; transition: width 0.3s;"></div>
-            </div>
-            <div style="font-size: 12px; color: #666;">
-                <div>Total: ${fileCount} arquivo(s)</div>
-                <div id="download-current">Aguardando...</div>
-            </div>
-            <button onclick="hideDownloadProgress()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-top: 10px; cursor: pointer;">Fechar</button>
-        </div>
-    `;
-    
-    // Remove existing progress if any
-    const existing = document.getElementById('download-progress');
-    if (existing) {
-        existing.remove();
-    }
-    
-    // Add progress to body
-    document.body.insertAdjacentHTML('beforeend', progressHtml);
+    // Function disabled to prevent progress pop-ups
+    return;
 }
 
-// Update download progress
+// Update download progress - DISABLED
 function updateDownloadProgress(current, total) {
-    const progressBar = document.getElementById('download-progress-bar');
-    const statusText = document.getElementById('download-status');
-    const currentText = document.getElementById('download-current');
-    
-    if (progressBar && statusText && currentText) {
-        const percentage = (current / total) * 100;
-        progressBar.style.width = percentage + '%';
-        statusText.textContent = `Baixando ${current} de ${total} arquivos...`;
-        currentText.textContent = `Progresso: ${Math.round(percentage)}%`;
-    }
+    // Function disabled to prevent progress pop-ups
+    return;
 }
 
-// Hide download progress
+// Hide download progress - DISABLED
 function hideDownloadProgress() {
-    const progress = document.getElementById('download-progress');
-    if (progress) {
-        progress.remove();
-    }
+    // Function disabled to prevent progress pop-ups
+    return;
 }
 
 // Enhanced multiple downloads function with better error handling
+// Add protection against simultaneous executions
+let downloadInProgress = false;
+
 function startMultipleDownloads(urls) {
+    // Prevent simultaneous executions
+    if (downloadInProgress) {
+        console.log("Downloads já estão em progresso. Aguarde a conclusão.");
+        return;
+    }
+    
     if (!urls || urls.length === 0) {
         alert("Nenhuma URL válida para download!");
         return;
     }
     
+    // Set download in progress flag
+    downloadInProgress = true;
+    
     // Check if pop-ups are blocked
     const testWindow = window.open('', '_blank');
     if (!testWindow) {
         showNotification("BLOQUEIO DETECTADO!\n\nSeu navegador está bloqueando pop-ups. Para permitir downloads múltiplos:\n\n1. Olhe na barra de endereços por um ícone de bloqueio\n2. Clique no ícone e selecione 'Permitir pop-ups'\n3. Recarregue a página e tente novamente\n\nOu use Ctrl+Click para baixar arquivos individualmente.", 'warning', 10000);
-        hideDownloadProgress();
+        downloadInProgress = false;
         return;
     } else {
         testWindow.close();
